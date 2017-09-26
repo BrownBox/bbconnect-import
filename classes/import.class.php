@@ -18,7 +18,7 @@ class bbconnect_import {
 <div class="wrap">
     <h2>Import Contacts</h2>
 <?php
-        if (isset($_FILES['uploadedfile']['tmp_name'])) {
+        if (!empty($_FILES['uploadedfile']['tmp_name'])) {
             $data = $this->csv_to_array($_FILES['uploadedfile']['tmp_name']);
 
             unset($errors);
@@ -74,15 +74,15 @@ class bbconnect_import {
         </thead>
         <tr>
             <th scope="col">email</th>
-            <td><strong>Required</strong> When processing your file, the system will attempt to locate an existing user with the provided email address. If found, the user will be updated with the details in the CSV. If not found, a new user will be created with the provided details.</td>
+            <td><strong>Required</strong>. When processing your file, the system will attempt to locate an existing user with the provided email address. If found, the user will be updated with the details in the CSV. If not found, a new user will be created with the provided details.</td>
         </tr>
         <tr>
             <th scope="col">firstname</th>
-            <td><strong>Required for new contacts</strong> Ignored for existing contacts</td>
+            <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
             <th scope="col">lastname</th>
-            <td><strong>Required for new contacts</strong> Ignored for existing contacts</td>
+            <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
             <th scope="col">address1</th>
@@ -109,12 +109,8 @@ class bbconnect_import {
             <td></td>
         </tr>
         <tr>
-            <th scope="col">telephone</th>
-            <td></td>
-        </tr>
-        <tr>
-            <th scope="col">telephone_type</th>
-            <td>One of 'home', 'work', 'mobile' or 'other'</td>
+            <th scope="col"><em>type</em>_telephone</th>
+            <td>One or more phone number fields. By default <em>type</em> should be one of 'home', 'work', 'mobile' or 'other'; however additional types can be configured via <a href="<?php echo admin_url('admin.php?page=bbconnect_meta_options'); ?>" target="_blank">Manage Fields</a>.</td>
         </tr>
     </table>
     <p><strong>IMPORTANT:</strong> All other fields should match the field names set up in the system. See the <a href="<?php echo admin_url('admin.php?page=bbconnect_meta_options'); ?>" target="_blank">Manage Fields</a> page to view the defined fields.</p>
@@ -192,52 +188,70 @@ class bbconnect_import {
             update_user_meta($user_id, 'active', 'true');
             update_user_meta($user_id, 'receives_letters', 'true');
             update_user_meta($user_id, 'receives_newsletters', 'true');
+            update_user_meta($user_id, 'bbconnect_bbc_primary', 'address_1');
         }
 
         unset($data['email'], $data['firstname'], $data['lastname']);
 
         // Now we can put the rest of the data into the user meta
-        // First some special cases
-        if (isset($data['address1'])) {
-            update_user_meta($user_id, 'bbconnect_address_one_1', $data['address1']);
-            unset($data['address1']);
-        }
-        if (isset($data['address2'])) {
-            update_user_meta($user_id, 'bbconnect_address_two_1', $data['address2']);
-            unset($data['address2']);
-        }
-        if (isset($data['suburb'])) {
-            update_user_meta($user_id, 'bbconnect_address_city_1', $data['suburb']);
-            unset($data['suburb']);
-        }
-        if (isset($data['state'])) {
-            update_user_meta($user_id, 'bbconnect_address_state_1', $data['state']);
-            unset($data['state']);
-        }
-        if (isset($data['postcode'])) {
-            update_user_meta($user_id, 'bbconnect_address_postal_code_1', $data['postcode']);
-            unset($data['postcode']);
-        }
-        if (!empty($data['country'])) {
-            $country = bbconnect_process_country($data['country']);
-            update_user_meta($user_id, 'bbconnect_address_country_1', $country);
-            unset($data['country']);
-        }
-        update_user_meta($user_id, 'bbconnect_bbc_primary', 'address_1');
-
-        if (!empty($data['telephone'])) {
-            $phone_data = array(
-                    array(
-                            'value' => $data['telephone'],
-                            'type' => !empty($data['telephone_type']) ? $data['telephone_type'] : 'home',
-                    ),
-            );
-            update_user_meta($user_id, 'telephone', $phone_data);
-            unset($data['telephone']);
-        }
-
-        // Everything else we just use the data key as the meta key
         foreach ($data as $key => $value) {
+            if (empty($value)) { // We don't ever want to save an empty value
+                continue;
+            }
+            // Address we allow simplified headers to make it easier
+            switch ($key) {
+                case 'address1':
+                    update_user_meta($user_id, 'bbconnect_address_one_1', $value);
+                    continue;
+                    break;
+                case 'address2':
+                    update_user_meta($user_id, 'bbconnect_address_two_1', $value);
+                    continue;
+                    break;
+                case 'suburb':
+                    update_user_meta($user_id, 'bbconnect_address_city_1', $value);
+                    continue;
+                    break;
+                case 'state':
+                    update_user_meta($user_id, 'bbconnect_address_state_1', $value);
+                    continue;
+                    break;
+                case 'postcode':
+                    update_user_meta($user_id, 'bbconnect_address_postal_code_1', $value);
+                    continue;
+                    break;
+                case 'country':
+                    $country = bbconnect_process_country($value);
+                    update_user_meta($user_id, 'bbconnect_address_country_1', $country);
+                    continue;
+                    break;
+            }
+
+            // Telephone is a very special case
+            if (strpos($key, 'telephone') !== false) {
+                list($type, $junk) = explode('_', $key);
+                $phone_data = maybe_unserialize(get_user_meta($user_id, 'telephone', true));
+                $phone_exists = false;
+                if (is_array($phone_data)) {
+                    foreach ($phone_data as $idx => $existing_phone) {
+                        if (isset($existing_phone['value']) && $existing_phone['value'] == $value) {
+                            $phone_data[$idx]['type'] = $type;
+                            $phone_exists = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$phone_exists) {
+                    $phone_data[] = array(
+                            'value' => $value,
+                            'type' => $type,
+                    );
+                }
+                update_user_meta($user_id, 'telephone', $phone_data);
+                continue;
+            }
+
+            // Everything else we just use the data key as the meta key
             update_user_meta($user_id, $key, $value);
         }
 
