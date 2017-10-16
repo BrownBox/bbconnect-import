@@ -73,43 +73,52 @@ class bbconnect_import {
             </tr>
         </thead>
         <tr>
-            <th scope="col">email</th>
-            <td><strong>Required</strong>. When processing your file, the system will attempt to locate an existing user with the provided email address. If found, the user will be updated with the details in the CSV. If not found, a new user will be created with the provided details.</td>
+            <th scope="row">email</th>
+            <td>When processing your file, the system will attempt to locate an existing user with the provided email address. If found, the user will be <strong>updated</strong> with the details in the CSV. If not found, a new user will be created with the provided details.<br>
+            <strong>If email is empty or missing, a dummy email address will be auto-generated.</strong></td>
         </tr>
         <tr>
-            <th scope="col">firstname</th>
+            <th scope="row">import_id</th>
+            <td><strong>Recommended</strong>. ID from external system, useful for matching subsequent imports. Will be used as a secondary matching criteria if email address doesn't produce a match.</td>
+        </tr>
+        <tr>
+            <th scope="row">firstname</th>
             <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
-            <th scope="col">lastname</th>
+            <th scope="row">lastname</th>
             <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
-            <th scope="col">address1</th>
+            <th scope="row">addressee</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col">address2</th>
+            <th scope="row">address1</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col">suburb</th>
+            <th scope="row">address2</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col">state</th>
+            <th scope="row">suburb</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col">postcode</th>
+            <th scope="row">state</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col">country</th>
+            <th scope="row">postcode</th>
             <td></td>
         </tr>
         <tr>
-            <th scope="col"><em>type</em>_telephone</th>
+            <th scope="row">country</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th scope="row"><em>type</em>_telephone</th>
             <td>One or more phone number fields. By default <em>type</em> should be one of 'home', 'work', 'mobile' or 'other'; however additional types can be configured via <a href="<?php echo admin_url('admin.php?page=bbconnect_meta_options'); ?>" target="_blank">Manage Fields</a>.</td>
         </tr>
     </table>
@@ -150,18 +159,35 @@ class bbconnect_import {
 
     private function import_user($data) {
         if (empty($data['email'])) {
-            return 'You must specify an email address';
+            $email = $data['firstname'].'_'.$data['lastname'].'_';
+            if (!empty($data['import_id'])) {
+                $email .= $data['import_id'];
+            } else {
+                $email .= wp_generate_password(6, false);
+            }
+            $email .= '@example.com';
+            $data['email'] = strtolower($email);
         }
 
         if (email_exists($data['email'])) { // Existing user
             $user = get_user_by('email', $data['email']);
-            $user_id = $user->ID;
-            $active = get_user_meta($user_id, 'active', true);
-            if ($active == 'false') {
-                update_user_meta($user_id, 'receives_letters', 'true');
-                update_user_meta($user_id, 'receives_newsletters', 'true');
-                update_user_meta($user_id, 'active', 'true');
+        } elseif (!empty($data['import_id'])) { // Try looking up by import_id
+            $args = array(
+                    'meta_query' => array(
+                            array(
+                                    'key' => 'import_id',
+                                    'value' => $data['import_id'],
+                            ),
+                    ),
+            );
+            $users = get_users($args);
+            if (count($users) > 0) {
+                $user = array_shift($users);
             }
+        }
+
+        if ($user instanceof WP_User) {
+            $user_id = $user->ID;
         } else { // New user
             $user_name = wp_generate_password(8, false);
             $random_password = wp_generate_password(12, false);
@@ -195,11 +221,16 @@ class bbconnect_import {
 
         // Now we can put the rest of the data into the user meta
         foreach ($data as $key => $value) {
+            $value = trim($value);
             if (empty($value)) { // We don't ever want to save an empty value
                 continue;
             }
             // Address we allow simplified headers to make it easier
             switch ($key) {
+                case 'addressee':
+                    update_user_meta($user_id, 'bbconnect_recipient_one_1', $value);
+                    continue;
+                    break;
                 case 'address1':
                     update_user_meta($user_id, 'bbconnect_address_one_1', $value);
                     continue;
