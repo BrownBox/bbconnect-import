@@ -62,6 +62,22 @@ class bbconnect_import {
             echo '<p><strong>' . $done . ' record' . $plural . ' imported.</strong></p>';
             echo '<a class="button" href="">Process another file</a>';
         } else {
+            if (!empty($_FILES['uploadedfile']['error'])) {
+                $upload_error_strings = array(
+                        false,
+                        __('The uploaded file exceeds the upload_max_filesize directive in php.ini.'),
+                        __('The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.'),
+                        __('The uploaded file was only partially uploaded.'),
+                        __('No file was uploaded.'),
+                        '',
+                        __('Missing a temporary folder.'),
+                        __('Failed to write file to disk.'),
+                        __('File upload stopped by extension.'),
+                );
+?>
+    <div class="error"><p><strong>There was an error uploading your file:</strong> <?php echo $upload_error_strings[$_FILES['uploadedfile']['error']]; ?></p></div>
+<?php
+            }
 ?>
     <p>Upload a CSV file containing your contacts from another system to import them into Connexions. Your CSV file must contain one record per line, with the first line of the file containing the field names.</p>
     <p>The following special fields are recognised:</p>
@@ -124,10 +140,11 @@ class bbconnect_import {
     </table>
     <p><strong>IMPORTANT:</strong> All other fields should match the field names set up in the system. See the <a href="<?php echo admin_url('admin.php?page=bbconnect_meta_options'); ?>" target="_blank">Manage Fields</a> page to view the defined fields.</p>
     <form enctype="multipart/form-data" action="#" method="POST">
-        <input type="hidden" name="MAX_FILE_SIZE" value="100000">
+        <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo wp_max_upload_size(); ?>">
         <p><label>Choose a file to upload: <input name="uploadedfile" type="file"></label></p>
         <input type="submit" value="Import CSV File">
     </form>
+    <p><strong>Please be patient after clicking "Import". Depending on the size of your file the process can take quite some time. Please do not click the button multiple times or navigate away from this page.</strong>
 </div>
 <?php
         }
