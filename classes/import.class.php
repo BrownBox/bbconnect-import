@@ -19,6 +19,7 @@ class bbconnect_import {
     <h2>Import Contacts</h2>
 <?php
         if (!empty($_FILES['uploadedfile']['tmp_name'])) {
+            $start = microtime(true);
             $data = $this->csv_to_array($_FILES['uploadedfile']['tmp_name']);
 
             unset($errors);
@@ -49,6 +50,13 @@ class bbconnect_import {
                 }
             }
             $user_list .= '</table>';
+
+            $done = count($data) - count($errors);
+            $plural = ($done != 1) ? 's' : '';
+            $end = microtime(true);
+            $time = round($end-$start, 2);
+            echo '<p><strong>' . $done . ' record' . $plural . ' imported in '.$time.' seconds.</strong></p>';
+
             if (count($errors) > 0) {
                 $plural = (count($errors) > 1) ? 's' : '';
                 echo '<p>' . count($errors) . ' record' . $plural . ' could not be imported.</p>';
@@ -57,10 +65,6 @@ class bbconnect_import {
                 echo '</textarea>';
             }
             echo $user_list;
-
-            $done = count($data) - count($errors);
-            $plural = ($done != 1) ? 's' : '';
-            echo '<p><strong>' . $done . ' record' . $plural . ' imported.</strong></p>';
             echo '<a class="button" href="">Process another file</a>';
         } else {
             if (!empty($_FILES['uploadedfile']['error'])) {
@@ -143,7 +147,7 @@ class bbconnect_import {
     <form enctype="multipart/form-data" action="#" method="POST">
         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo wp_max_upload_size(); ?>">
         <p><label>Choose a file to upload: <input name="uploadedfile" type="file"></label></p>
-        <p><strong>Please be patient after clicking "Import". Depending on the size of your file the process can take quite some time. Please do not click the button multiple times or navigate away from this page.</strong>
+        <p><strong>Please be patient after clicking "Import". Depending on the size of your file the process can take quite some time. Please do not click the button multiple times or navigate away from this page.</strong></p>
         <input type="submit" value="Import CSV File">
     </form>
 </div>
