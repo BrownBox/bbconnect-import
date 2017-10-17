@@ -229,6 +229,9 @@ class bbconnect_import {
                     'user_email' => $data['email'],
                     'user_nicename' => $data['first_name'],
             );
+            if (!empty($data['user_registered'])) {
+                $userdata['user_registered'] = $data['user_registered'];
+            }
             $user_id = wp_insert_user($userdata);
 
             // On fail
@@ -242,7 +245,7 @@ class bbconnect_import {
             update_user_meta($user_id, 'bbconnect_bbc_primary', 'address_1');
         }
 
-        unset($data['email'], $data['first_name'], $data['last_name']);
+        unset($data['email'], $data['first_name'], $data['last_name'], $data['user_registered']);
 
         // Now we can put the rest of the data into the user meta
         foreach ($data as $key => $value) {
