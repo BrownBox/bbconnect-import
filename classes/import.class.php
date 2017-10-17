@@ -143,9 +143,9 @@ class bbconnect_import {
     <form enctype="multipart/form-data" action="#" method="POST">
         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo wp_max_upload_size(); ?>">
         <p><label>Choose a file to upload: <input name="uploadedfile" type="file"></label></p>
+        <p><strong>Please be patient after clicking "Import". Depending on the size of your file the process can take quite some time. Please do not click the button multiple times or navigate away from this page.</strong>
         <input type="submit" value="Import CSV File">
     </form>
-    <p><strong>Please be patient after clicking "Import". Depending on the size of your file the process can take quite some time. Please do not click the button multiple times or navigate away from this page.</strong>
 </div>
 <?php
         }
