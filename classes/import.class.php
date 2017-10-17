@@ -277,7 +277,10 @@ class bbconnect_import {
                     continue;
                     break;
                 case 'country':
-                    $country = bbconnect_process_country($value);
+                    $country = bbconnect_process_country(ucwords(strtolower($value)));
+                    if (!$country) {
+                        $country = $value;
+                    }
                     update_user_meta($user_id, 'bbconnect_address_country_1', $country);
                     continue;
                     break;
