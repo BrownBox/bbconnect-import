@@ -184,7 +184,7 @@ class bbconnect_import {
         }
 
         if (empty($data['email'])) {
-            $email = $data['first_name'].'_'.$data['last_name'].'_';
+            $email = preg_replace('/[^0-9a-z_-]/i', '', $data['first_name'].'_'.$data['last_name'].'_');
             if (!empty($data['import_id'])) {
                 $email .= $data['import_id'];
             } else {
