@@ -28,27 +28,27 @@ class bbconnect_import {
             $plural = (count($data) != 1) ? 's' : '';
             $headers = false;
             echo '<p>' . count($data) . ' record' . $plural . ' available for processing.</p>';
-            echo '<table class="widefat striped">';
+            $user_list = '<table class="widefat striped">';
             foreach ($data as $d) {
                 if (!$headers) {
-                    echo '<tr>';
+                    $user_list .= '<tr>';
                     foreach ($d as $h => $v) {
-                        echo '<th>'.$h.'</th>';
+                        $user_list .= '<th>'.$h.'</th>';
                     }
-                    echo '</tr>';
+                    $user_list .= '</tr>';
                     $headers = true;
                 }
-                echo '<tr>';
+                $user_list .= '<tr>';
                 foreach ($d as $v) {
-                    echo '<td>'.$v.'</td>';
+                    $user_list .= '<td>'.$v.'</td>';
                 }
-                echo '</tr>';
+                $user_list .= '</tr>';
                 $e = $this->import_user($d);
                 if (strlen($e) > 0) {
                     array_push($errors, $e);
                 }
             }
-            echo '</table>';
+            $user_list .= '</table>';
             if (count($errors) > 0) {
                 $plural = (count($errors) > 1) ? 's' : '';
                 echo '<p>' . count($errors) . ' record' . $plural . ' could not be imported.</p>';
@@ -56,6 +56,7 @@ class bbconnect_import {
                 print_r($errors);
                 echo '</textarea>';
             }
+            echo $user_list;
 
             $done = count($data) - count($errors);
             $plural = ($done != 1) ? 's' : '';
