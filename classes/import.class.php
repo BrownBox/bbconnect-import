@@ -239,9 +239,6 @@ class bbconnect_import {
                 return $data['email'].': Error creating user - '.$user_id->get_error_message();
             }
 
-            update_user_meta($user_id, 'active', 'true');
-            update_user_meta($user_id, 'receives_letters', 'true');
-            update_user_meta($user_id, 'receives_newsletters', 'true');
             update_user_meta($user_id, 'bbconnect_bbc_primary', 'address_1');
         }
 
