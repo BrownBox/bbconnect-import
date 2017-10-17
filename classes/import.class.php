@@ -98,12 +98,12 @@ class bbconnect_import {
             <td><strong>Recommended</strong>. ID from external system, useful for matching subsequent imports. Will be used as a secondary matching criteria if email address doesn't produce a match.</td>
         </tr>
         <tr>
-            <th scope="row">firstname</th>
-            <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
+            <th scope="row">first_name</th>
+            <td><strong>Recommended for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
-            <th scope="row">lastname</th>
-            <td><strong>Required for new contacts</strong>. Ignored for existing contacts.</td>
+            <th scope="row">last_name</th>
+            <td><strong>Recommended for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
             <th scope="row">addressee</th>
@@ -175,8 +175,15 @@ class bbconnect_import {
     }
 
     private function import_user($data) {
+        if (empty($data['first_name'])) {
+            $data['first_name'] = 'Unknown';
+        }
+        if (empty($data['last_name'])) {
+            $data['last_name'] = 'Unknown';
+        }
+
         if (empty($data['email'])) {
-            $email = $data['firstname'].'_'.$data['lastname'].'_';
+            $email = $data['first_name'].'_'.$data['last_name'].'_';
             if (!empty($data['import_id'])) {
                 $email .= $data['import_id'];
             } else {
@@ -209,23 +216,19 @@ class bbconnect_import {
             $user_name = wp_generate_password(8, false);
             $random_password = wp_generate_password(12, false);
 
-            if (empty($data['firstname']) || empty($data['lastname'])) {
-                return 'First name and last name are required for new users';
-            }
-
             $userdata = array(
                     'user_login' => $user_name,
-                    'first_name' => $data['firstname'],
-                    'last_name' => $data['lastname'],
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
                     'user_pass' => $random_password,
                     'user_email' => $data['email'],
-                    'user_nicename' => $data['firstname'],
+                    'user_nicename' => $data['first_name'],
             );
             $user_id = wp_insert_user($userdata);
 
             // On fail
             if (is_wp_error($user_id)) {
-                return 'Error creating user: '.$user_id->get_error_message();
+                return $data['email'].': Error creating user - '.$user_id->get_error_message();
             }
 
             update_user_meta($user_id, 'active', 'true');
@@ -234,7 +237,7 @@ class bbconnect_import {
             update_user_meta($user_id, 'bbconnect_bbc_primary', 'address_1');
         }
 
-        unset($data['email'], $data['firstname'], $data['lastname']);
+        unset($data['email'], $data['first_name'], $data['last_name']);
 
         // Now we can put the rest of the data into the user meta
         foreach ($data as $key => $value) {
