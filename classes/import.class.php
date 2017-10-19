@@ -217,6 +217,11 @@ class bbconnect_import {
 
         if ($user instanceof WP_User) {
             $user_id = $user->ID;
+            if (is_multisite()) {
+                // Make sure user is a member of this site
+                global $blog_id;
+                add_user_to_blog($blog_id, $user_id, get_option('default_role'));
+            }
         } else { // New user
             $user_name = wp_generate_password(8, false);
             $random_password = wp_generate_password(12, false);
