@@ -45,7 +45,7 @@ class bbconnect_import {
                 }
                 $user_list .= '</tr>';
                 $e = $this->import_user($d);
-                if (strlen($e) > 0) {
+                if (is_string($e) && strlen($e) > 0) {
                     array_push($errors, $e);
                 }
             }
