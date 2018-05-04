@@ -110,6 +110,10 @@ class bbconnect_import {
             <td><strong>Recommended for new contacts</strong>. Ignored for existing contacts.</td>
         </tr>
         <tr>
+            <th scope="row">password</th>
+            <td><strong>Optional. Recommended for new contacts if they require the ability to log in.</strong>. If empty a random password will be assigned (but not recorded) for new contacts. Ignored for existing contacts.</td>
+        </tr>
+        <tr>
             <th scope="row">addressee</th>
             <td></td>
         </tr>
@@ -430,13 +434,14 @@ class bbconnect_import {
             }
         } else { // New user
             $user_name = wp_generate_password(8, false);
-            $random_password = wp_generate_password(12, false);
+            $user_pass = empty($data['password']) ? wp_generate_password(12, false) : $data['password'];
+            unset($data['password']);
 
             $userdata = array(
                     'user_login' => $user_name,
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
-                    'user_pass' => $random_password,
+                    'user_pass' => $user_pass,
                     'user_email' => $data['email'],
                     'user_nicename' => $data['first_name'],
             );
