@@ -251,7 +251,6 @@ class bbconnect_import {
             }
         </script>
 <?php
-        $this->ajax_do_import();
     }
 
     private function result_page() {
