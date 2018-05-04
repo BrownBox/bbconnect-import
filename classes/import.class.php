@@ -162,7 +162,7 @@ class bbconnect_import {
         $fail_count = $details['result']['fail_count'];
         $processed_count = $success_count+$fail_count;
         $total_count = $details['result']['total_count'];
-        $fraction = ($processed_count)/$total_count;
+        $fraction = $processed_count/$total_count;
         $percent = floor($fraction*100);
 ?>
         <p>Processing <strong><?php echo $details['filename']; ?></strong> uploaded on <?php echo $details['added']; ?></p>
@@ -196,9 +196,11 @@ class bbconnect_import {
             <p class="progress-text progress"><span class="percent"><?php echo $percent; ?></span>% complete</p>
         </div>
         <p style="text-align: center;" id="progress_message"><span class="processed"><?php echo $processed_count; ?></span> of <span class="total"><?php echo $total_count; ?></span> records processed.</p>
+        <p><strong>The import system has been designed to continue processing in the background even if you navigate away from this page. However we have found that on some systems this does not work - if that is the case just leave this page open and the import process will run as expected.</strong></p>
         <script>
             jQuery(document).ready(function() {
                 window.setTimeout('bbconnect_import_get_progress()', 1000);
+                window.setTimeout('bbconnect_import_do_import()', 1000);
             });
             function bbconnect_import_get_progress() {
                 var data = {
@@ -239,8 +241,17 @@ class bbconnect_import {
                     }
                 });
             }
+            function bbconnect_import_do_import() {
+                data = {
+                        action: 'bbconnect_import_do_import'
+                }
+                jQuery.post(ajaxurl, data).always(function () {
+                    window.setTimeout('bbconnect_import_do_import()', 30000);
+                });
+            }
         </script>
 <?php
+        $this->ajax_do_import();
     }
 
     private function result_page() {
@@ -319,13 +330,12 @@ class bbconnect_import {
             fastcgi_finish_request();
         } else {
             ob_end_clean();
-            header("Connection: close\r\n");
-            header("Content-Encoding: none\r\n");
             ignore_user_abort(true);
-            ob_start();
-            echo 'Thanks!';
-            header("Content-Length: ".ob_get_length());
-            ob_end_flush();
+            if (wp_doing_ajax()) {
+                header("Connection: close\r\n");
+                header("Content-Encoding: none\r\n");
+                header("Content-Length: 0");
+            }
             flush();
             if (session_id()) {
                 session_write_close();
@@ -359,10 +369,14 @@ class bbconnect_import {
                     $details['status'] = self::STATUS_IN_PROGRESS;
                 }
                 $this->update_progress($details);
-                die($n.' records processed');
+                if (wp_doing_ajax()) {
+                    die($n.' records processed');
+                }
             }
         }
-        die('Nothing to do');
+        if (wp_doing_ajax()) {
+            die('Nothing to do');
+        }
     }
 
     private function csv_to_array($filename = '', $delimiter = ',') {
