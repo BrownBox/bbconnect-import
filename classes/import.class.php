@@ -425,12 +425,15 @@ class bbconnect_import {
             }
         }
 
+        $role = !empty($data['role']) ? $data['role'] : get_option('default_role');
+        unset($data['role']);
+
         if ($user instanceof WP_User) {
             $user_id = $user->ID;
-            if (is_multisite()) {
+            global $blog_id;
+            if (is_multisite() && !is_user_member_of_blog($user_id, $blog_id)) {
                 // Make sure user is a member of this site
-                global $blog_id;
-                add_user_to_blog($blog_id, $user_id, get_option('default_role'));
+                add_user_to_blog($blog_id, $user_id, $role);
             }
         } else { // New user
             $user_name = wp_generate_password(8, false);
@@ -444,6 +447,7 @@ class bbconnect_import {
                     'user_pass' => $user_pass,
                     'user_email' => $data['email'],
                     'user_nicename' => $data['first_name'],
+                    'role' => $role,
             );
             if (!empty($data['user_registered'])) {
                 $userdata['user_registered'] = $data['user_registered'];
