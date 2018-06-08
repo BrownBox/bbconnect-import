@@ -410,16 +410,8 @@ class bbconnect_import {
         if (empty($data['last_name'])) {
             $data['last_name'] = 'Unknown';
         }
-
         if (empty($data['email'])) {
-            $email = preg_replace('/[^0-9a-z_-]/i', '', $data['first_name'].'_'.$data['last_name'].'_');
-            if (!empty($data['import_id'])) {
-                $email .= $data['import_id'];
-            } else {
-                $email .= wp_generate_password(6, false);
-            }
-            $email .= '@example.com';
-            $data['email'] = strtolower($email);
+            $data['email'] = $this->generate_email($data);
         }
 
         if (email_exists($data['email'])) { // Existing user
@@ -549,6 +541,22 @@ class bbconnect_import {
         }
 
         return ''; // No error
+    }
+
+    /**
+     * Generate a dummy email address
+     * @param array $data Array containing first_name, last_name and optionally import_id
+     * @return string Generated email address
+     */
+    private function generate_email(array $data) {
+        $email = preg_replace('/[^0-9a-z_-]/i', '', $data['first_name'].'_'.$data['last_name'].'_');
+        if (!empty($data['import_id'])) {
+            $email .= $data['import_id'];
+        } else {
+            $email .= wp_generate_password(6, false);
+        }
+        $email .= '@example.com';
+        return strtolower($email);
     }
 
     private function get_current_progress() {
