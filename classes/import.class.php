@@ -95,7 +95,7 @@ class bbconnect_import {
         </thead>
         <tr>
             <th scope="row">email</th>
-            <td>When processing your file, the system will attempt to locate an existing user with the provided email address. If found, the user will be <strong>updated</strong> with the details in the CSV. If not found, a new user will be created with the provided details.<br>
+            <td>When processing your file, the system will attempt to locate an existing user with the provided email address. If not found, a new user will be created with the provided details. If an existing user is found, the system will then compare last names. If this also matches, the user will be <strong>updated</strong> with the details in the CSV. If the last names do not match, the existing user will be updated with a dummy email address and a new user created with the uploaded details.<br>
             <strong>If email is empty or missing, a dummy email address will be auto-generated.</strong></td>
         </tr>
         <tr>
@@ -104,15 +104,15 @@ class bbconnect_import {
         </tr>
         <tr>
             <th scope="row">first_name</th>
-            <td><strong>Recommended for new contacts</strong>. Ignored for existing contacts.</td>
+            <td><strong>Strongly recommended for new contacts</strong>.</td>
         </tr>
         <tr>
             <th scope="row">last_name</th>
-            <td><strong>Recommended for new contacts</strong>. Ignored for existing contacts.</td>
+            <td><strong>Strongly recommended for new contacts</strong>. Used as a secondary matching criteria when a matching email address is found (see above).</td>
         </tr>
         <tr>
             <th scope="row">password</th>
-            <td><strong>Optional. Recommended for new contacts if they require the ability to log in.</strong>. If empty a random password will be assigned (but not recorded) for new contacts. Ignored for existing contacts.</td>
+            <td><strong>Optional. Recommended for new contacts if they require the ability to log in.</strong>. If not supplied a random password will be assigned (but not recorded) for new contacts. Ignored for existing contacts.</td>
         </tr>
         <tr>
             <th scope="row">addressee</th>
@@ -404,6 +404,7 @@ class bbconnect_import {
     }
 
     private function import_user($data) {
+        // Set some defaults
         if (empty($data['first_name'])) {
             $data['first_name'] = 'Unknown';
         }
@@ -413,10 +414,31 @@ class bbconnect_import {
         if (empty($data['email'])) {
             $data['email'] = $this->generate_email($data);
         }
+        $role = !empty($data['role']) ? $data['role'] : get_option('default_role');
+        unset($data['role']);
 
+        // Core matching logic
         if (email_exists($data['email'])) { // Existing user
             $user = get_user_by('email', $data['email']);
-        } elseif (!empty($data['import_id'])) { // Try looking up by import_id
+            if (strcasecmp($user->user_lastname, $data['last_name']) !== 0) {
+                /*
+                 * Same email but different surnames
+                 * We're going to assume then that this is a different contact with the same email address - e.g. multiple people using a generic company email
+                 */
+
+                // So we move the email address to the additional emails field
+                bbconnect_maybe_add_additional_email($user->ID, $data['email'], 'archive');
+
+                // And update the email address on this user to a dummy email
+                $user->user_email = $this->generate_email(array('first_name' => $user->user_firstname, 'last_name' => $user->user_lastname, 'import_id' => get_user_meta($user->ID, 'import_id', true)));
+                wp_update_user($user);
+
+                // Now put aside that user so we can locate or add a different record
+                unset($user);
+            }
+        }
+
+        if (!($user instanceof WP_User) && !empty($data['import_id'])) { // Try looking up by import_id
             $args = array(
                     'meta_query' => array(
                             array(
@@ -431,9 +453,6 @@ class bbconnect_import {
             }
         }
 
-        $role = !empty($data['role']) ? $data['role'] : get_option('default_role');
-        unset($data['role']);
-
         if ($user instanceof WP_User) {
             $user_id = $user->ID;
             global $blog_id;
@@ -441,6 +460,8 @@ class bbconnect_import {
                 // Make sure user is a member of this site
                 add_user_to_blog($blog_id, $user_id, $role);
             }
+            $user->user_firstname = $data['first_name'];
+            wp_update_user($user);
         } else { // New user
             $user_name = wp_generate_password(8, false);
             $user_pass = empty($data['password']) ? wp_generate_password(12, false) : $data['password'];
