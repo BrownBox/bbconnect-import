@@ -516,24 +516,7 @@ class bbconnect_import {
             // Telephone is a very special case
             if (strpos($key, 'telephone') !== false) {
                 list($type, $junk) = explode('_', $key);
-                $phone_data = maybe_unserialize(get_user_meta($user_id, 'telephone', true));
-                $phone_exists = false;
-                if (is_array($phone_data)) {
-                    foreach ($phone_data as $idx => $existing_phone) {
-                        if (isset($existing_phone['value']) && $existing_phone['value'] == $value) {
-                            $phone_data[$idx]['type'] = $type;
-                            $phone_exists = true;
-                            break;
-                        }
-                    }
-                }
-                if (!$phone_exists) {
-                    $phone_data[] = array(
-                            'value' => $value,
-                            'type' => $type,
-                    );
-                }
-                update_user_meta($user_id, 'telephone', $phone_data);
+                bbconnect_maybe_add_telephone($user_id, $value, $type);
                 continue;
             }
 
