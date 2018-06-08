@@ -35,3 +35,9 @@ function bbconnect_import_deactivate_notice() {
         unset($_GET['activate']);
     }
 }
+
+function bbconnect_import_admin_pages($pages) {
+    $pages[] = 'bbconnect_import';
+    return $pages;
+}
+add_filter('bbconnect_admin_pages', 'bbconnect_import_admin_pages');

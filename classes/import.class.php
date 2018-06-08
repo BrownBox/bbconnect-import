@@ -18,7 +18,7 @@ class bbconnect_import {
         }
 
         if (is_admin()) {
-            add_action('admin_menu', array($this, 'add_plugin_page'));
+            add_filter('bbconnect_push_menu', array($this, 'add_menu_item'));
         }
         if ($this->is_processing_file() && (!wp_doing_ajax() || $_REQUEST['action'] != 'bbconnect_import_do_import')) {
             add_action('shutdown', array($this, 'process_file'));
@@ -29,8 +29,9 @@ class bbconnect_import {
         add_action('wp_ajax_bbconnect_import_get_current_progress', array($this, 'ajax_get_current_progress'));
     }
 
-    public function add_plugin_page() {
-        add_submenu_page('bbconnect_options', 'Import Contacts', 'Import Contacts', 'administrator', 'bbconnect_import', array($this, 'create_admin_page'));
+    public function add_menu_item($menu_items) {
+        $menu_items['bbconnect_import'] = add_submenu_page('bbconnect_options', 'Import Contacts', 'Import Contacts', 'administrator', 'bbconnect_import', array($this, 'create_admin_page'));
+        return $menu_items;
     }
 
     public function create_admin_page() {
