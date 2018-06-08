@@ -14,7 +14,7 @@ define('BBCONNECT_IMPORT_URL', plugin_dir_url(__FILE__));
 require_once(BBCONNECT_IMPORT_DIR.'classes/import.class.php');
 
 function bbconnect_import_init() {
-    if (!defined('BBCONNECT_VER')) {
+    if (!defined('BBCONNECT_VER') || version_compare(BBCONNECT_VER, '2.8.2', '<')) {
         add_action('admin_init', 'bbconnect_import_deactivate');
         add_action('admin_notices', 'bbconnect_import_deactivate_notice');
         return;
@@ -30,7 +30,7 @@ function bbconnect_import_deactivate() {
 }
 
 function bbconnect_import_deactivate_notice() {
-    echo '<div class="updated"><p><strong>Connexions Import</strong> has been <strong>deactivated</strong> as it requires Connexions.</p></div>';
+    echo '<div class="updated"><p><strong>Connexions Import</strong> has been <strong>deactivated</strong> as it requires Connexions (v2.8.2 or higher).</p></div>';
     if (isset($_GET['activate'])) {
         unset($_GET['activate']);
     }
