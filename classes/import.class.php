@@ -534,10 +534,14 @@ class bbconnect_import {
                     break;
             }
 
-            // Telephone is a very special case
+            // Telephone and Additional Email are very special cases
             if (strpos($key, 'telephone') !== false) {
                 list($type, $junk) = explode('_', $key);
                 bbconnect_maybe_add_telephone($user_id, $value, $type);
+                continue;
+            } elseif (strpos($key, 'additional_email') !== false) {
+                list($type, $junk) = explode('_', $key);
+                bbconnect_maybe_add_additional_email($user_id, $value, $type);
                 continue;
             }
 
