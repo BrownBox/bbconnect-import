@@ -30,7 +30,7 @@ class bbconnect_import {
     }
 
     public function add_menu_item($menu_items) {
-        $menu_items['bbconnect_import'] = add_submenu_page('bbconnect_options', 'Import Contacts', 'Import Contacts', 'administrator', 'bbconnect_import', array($this, 'create_admin_page'));
+        $menu_items['bbconnect_import'] = add_submenu_page('bbconnect_options', 'Import Contacts', 'Import Contacts', 'add_users', 'bbconnect_import', array($this, 'create_admin_page'));
         return $menu_items;
     }
 
