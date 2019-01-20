@@ -571,13 +571,15 @@ class bbconnect_import {
 
     private function get_current_progress() {
         $history = get_option($this->option_name);
-        foreach ($history as &$details) {
-            if (in_array($details['status'], array(self::STATUS_WAITING, self::STATUS_IN_PROGRESS, self::STATUS_PROCESSING, self::STATUS_PENDING))) {
-                if ($details['status'] == self::STATUS_WAITING) {
-                    $details['status'] = self::STATUS_IN_PROGRESS;
-                    update_option($this->option_name, $history);
+        if (is_array($history)) {
+            foreach ($history as &$details) {
+                if (in_array($details['status'], array(self::STATUS_WAITING, self::STATUS_IN_PROGRESS, self::STATUS_PROCESSING, self::STATUS_PENDING))) {
+                    if ($details['status'] == self::STATUS_WAITING) {
+                        $details['status'] = self::STATUS_IN_PROGRESS;
+                        update_option($this->option_name, $history);
+                    }
+                    return $details;
                 }
-                return $details;
             }
         }
         return false;
@@ -591,20 +593,24 @@ class bbconnect_import {
 
     private function update_progress($details) {
         $history = get_option($this->option_name);
-        foreach ($history as $idx => $history_details) {
-            if ($details['path'] == $history_details['path']) {
-                $details['updated'] = current_time('mysql');
-                $history[$idx] = $details;
-                update_option($this->option_name, $history);
+        if (is_array($history)) {
+            foreach ($history as $idx => $history_details) {
+                if ($details['path'] == $history_details['path']) {
+                    $details['updated'] = current_time('mysql');
+                    $history[$idx] = $details;
+                    update_option($this->option_name, $history);
+                }
             }
         }
     }
 
     private function is_processing_file() {
         $history = get_option($this->option_name);
-        foreach ($history as $details) {
-            if (in_array($details['status'], array(self::STATUS_WAITING, self::STATUS_IN_PROGRESS, self::STATUS_PROCESSING))) {
-                return true;
+        if (is_array($history)) {
+            foreach ($history as $details) {
+                if (in_array($details['status'], array(self::STATUS_WAITING, self::STATUS_IN_PROGRESS, self::STATUS_PROCESSING))) {
+                    return true;
+                }
             }
         }
         return false;
@@ -612,9 +618,11 @@ class bbconnect_import {
 
     private function is_pending_file() {
         $history = get_option($this->option_name);
-        foreach ($history as $details) {
-            if ($details['status'] == self::STATUS_PENDING) {
-                return true;
+        if (is_array($history)) {
+            foreach ($history as $details) {
+                if ($details['status'] == self::STATUS_PENDING) {
+                    return true;
+                }
             }
         }
         return false;
