@@ -208,38 +208,39 @@ class bbconnect_import {
                         action: 'bbconnect_import_get_current_progress'
                 }
                 jQuery.post(ajaxurl, data, function(response) {
-                    // Grab the relevant values
-                    var total = response.result.total_count;
-                    var success = response.result.success_count;
-                    var fail = response.result.fail_count;
-                    var processed = success+fail;
-                    var fraction = processed/total;
-                    var percent = Math.floor(fraction*100);
+                    if (typeof response.result != 'undefined') {
+                        // Grab the relevant values
+                        var total = response.result.total_count;
+                        var success = response.result.success_count;
+                        var fail = response.result.fail_count;
+                        var processed = success+fail;
+                        var fraction = processed/total;
+                        var percent = Math.floor(fraction*100);
 
-                    // Update the display
-                    var elem_processed = jQuery('.processed');
-                    jQuery({Counter: elem_processed.text()}).animate({Counter: processed}, {
-                        duration: 500,
-                        easing: 'swing',
-                        step: function () {
-                            elem_processed.text(Math.ceil(this.Counter));
+                        // Update the display
+                        var elem_processed = jQuery('.processed');
+                        jQuery({Counter: elem_processed.text()}).animate({Counter: processed}, {
+                            duration: 500,
+                            easing: 'swing',
+                            step: function () {
+                                elem_processed.text(Math.ceil(this.Counter));
+                            }
+                        });
+                        var elem_percent = jQuery('.percent');
+                        jQuery({Counter: elem_percent.text()}).animate({Counter: percent}, {
+                            duration: 500,
+                            easing: 'swing',
+                            step: function () {
+                                elem_percent.text(Math.ceil(this.Counter));
+                            }
+                        });
+                        jQuery('.progress-bar').animate({left: percent+'%'}, 500);
+                        if (processed >= total) {
+                            jQuery('#progress_message').text('Import complete. Please wait a moment...');
+                            window.location.reload();
                         }
-                    });
-                    var elem_percent = jQuery('.percent');
-                    jQuery({Counter: elem_percent.text()}).animate({Counter: percent}, {
-                        duration: 500,
-                        easing: 'swing',
-                        step: function () {
-                            elem_percent.text(Math.ceil(this.Counter));
-                        }
-                    });
-                    jQuery('.progress-bar').animate({left: percent+'%'}, 500);
-                    if (processed >= total) {
-                        jQuery('#progress_message').text('Import complete. Please wait a moment...');
-                        window.location.reload();
-                    } else {
-                        window.setTimeout('bbconnect_import_get_progress()', 1000);
                     }
+                    window.setTimeout('bbconnect_import_get_progress()', 1000);
                 });
             }
             function bbconnect_import_do_import() {
@@ -247,7 +248,7 @@ class bbconnect_import {
                         action: 'bbconnect_import_do_import'
                 }
                 jQuery.post(ajaxurl, data).always(function () {
-                    window.setTimeout('bbconnect_import_do_import()', 30000);
+                    window.setTimeout('bbconnect_import_do_import()', 10000);
                 });
             }
         </script>
@@ -349,7 +350,7 @@ class bbconnect_import {
 
 
                 $n = 0;
-                while (array_key_exists($details['pos'], $data) && $n <= 100) {
+                while (array_key_exists($details['pos'], $data) && $n < 100) {
                     $d = $data[$details['pos']];
                     $e = $this->import_user($d);
                     if (!empty($e)) {
