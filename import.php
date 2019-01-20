@@ -3,7 +3,7 @@
  * Plugin Name: Connexions Import
  * Plugin URI: http://connexionscrm.com/
  * Description: Import your existing contacts to Connexions
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Brown Box
  * Author URI: http://brownbox.net.au
  * License: Proprietary Brown Box
