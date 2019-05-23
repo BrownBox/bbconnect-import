@@ -502,7 +502,7 @@ class bbconnect_import {
             // Address we allow simplified headers to make it easier
             switch ($key) {
                 case 'addressee':
-                    update_user_meta($user_id, 'bbconnect_recipient_one_1', $value);
+                    update_user_meta($user_id, 'bbconnect_address_recipient_1', $value);
                     continue;
                     break;
                 case 'address1':
