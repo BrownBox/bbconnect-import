@@ -503,27 +503,27 @@ class bbconnect_import {
             switch ($key) {
                 case 'addressee':
                     update_user_meta($user_id, 'bbconnect_address_recipient_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'address1':
                     update_user_meta($user_id, 'bbconnect_address_one_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'address2':
                     update_user_meta($user_id, 'bbconnect_address_two_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'suburb':
                     update_user_meta($user_id, 'bbconnect_address_city_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'state':
                     update_user_meta($user_id, 'bbconnect_address_state_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'postcode':
                     update_user_meta($user_id, 'bbconnect_address_postal_code_1', $value);
-                    continue;
+                    continue(2);
                     break;
                 case 'country':
                     $country = bbconnect_process_country(ucwords(strtolower($value)));
@@ -531,7 +531,7 @@ class bbconnect_import {
                         $country = $value;
                     }
                     update_user_meta($user_id, 'bbconnect_address_country_1', $country);
-                    continue;
+                    continue(2);
                     break;
             }
 
